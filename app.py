@@ -14,7 +14,7 @@ Python Version: 3.8+
 # IMPORTS
 # ============================================================
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_file
 from datetime import datetime
 import json
 import os
@@ -135,8 +135,32 @@ def find_course_by_id(courses, course_id):
 
 
 # ============================================================
+# CORS (allows opening index.html from file:// or another port)
+# ============================================================
+
+@app.before_request
+def handle_preflight():
+    if request.method == 'OPTIONS':
+        return '', 204
+
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    return response
+
+
+# ============================================================
 # API ROUTES
 # ============================================================
+
+@app.route('/app')
+def serve_ui():
+    """Serve the course management web UI"""
+    return send_file('index.html')
+
 
 @app.route('/', methods=['GET'])
 def home():
@@ -285,4 +309,7 @@ def get_course_stats():
 # ============================================================
 
 if __name__ == '__main__':
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    # Port 5001 avoids macOS AirPlay Receiver, which often uses 5000
+    port = int(os.environ.get('PORT', 5001))
+    print(f'Open the app at http://127.0.0.1:{port}/app')
+    app.run(debug=True, host='127.0.0.1', port=port)

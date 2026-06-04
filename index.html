@@ -748,7 +748,9 @@
     </div>
 
     <script>
-      const API = 'http://localhost:5000/api/courses';
+      const API = window.location.protocol === 'file:'
+        ? 'http://127.0.0.1:5001/api/courses'
+        : '/api/courses';
 
       let courses = [];
       let editingId = null;
@@ -876,7 +878,8 @@
         try {
           const res = await fetch(API);
           if (!res.ok) throw new Error(`Server responded with ${res.status}`);
-          courses = await res.json();
+          const data = await res.json();
+          courses = Array.isArray(data) ? data : (data.courses || []);
           renderCourses();
           updateStats();
         } catch (err) {
